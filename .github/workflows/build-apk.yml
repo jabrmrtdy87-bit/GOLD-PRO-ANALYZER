@@ -19,9 +19,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # ✅ الخطوة الجديدة: إعداد Android SDK بشكل صحيح
+      # ✅ التعديل الأساسي: تجاوز حزمة "tools" المحذوفة، وتثبيت platform-tools فقط
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
 
       - name: Install system dependencies
         run: |
@@ -34,7 +36,7 @@ jobs:
           pip install buildozer
           pip install cython==0.29.33
 
-      # ✅ قبول التراخيص وتثبيت build-tools
+      # ✅ قبول التراخيص وتثبيت build-tools (للاحتياط، سيقوم Buildozer بتثبيتها أيضاً)
       - name: Accept Android SDK Licenses & Install Build Tools
         run: |
           yes | sdkmanager --licenses || true
