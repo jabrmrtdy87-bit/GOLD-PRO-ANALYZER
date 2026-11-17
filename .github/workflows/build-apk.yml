@@ -3,8 +3,7 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-    # ✅ التغيير الأهم: استخدام إصدار 22.04 بدلاً من latest لتجنب مشاكل الحزم
-    runs-on: ubuntu-22.04 
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,7 +27,6 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          # الآن libtinfo5 ستُثبت بنجاح لأننا على ubuntu-22.04
           sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
       - name: Install Buildozer
@@ -36,14 +34,18 @@ jobs:
           pip install buildozer
           pip install cython==0.29.33
 
-      # ✅ قبول تراخيص Android SDK لضمان تثبيت build-tools و aidl
-      - name: Accept Android SDK Licenses
+      # ✅ الحل الجذري: إنشاء ملفات الترخيص في مسار Buildozer الصحيح
+      - name: Pre-accept Android SDK Licenses for Buildozer
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "build-tools;31.0.0" || true
+          BUILD_OZER_SDK=~/.buildozer/android/platform/android-sdk
+          mkdir -p $BUILD_OZER_SDK/licenses
+          echo -e "\n8933bad161af4b6a5b573652ffc7aaf3aee85a47" > $BUILD_OZER_SDK/licenses/android-sdk-license
+          echo -e "\nd56f5187479451eabf01fb78af6dfcb131b33910" > $BUILD_OZER_SDK/licenses/android-sdk-preview-license
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > $BUILD_OZER_SDK/licenses/google-tv-preview-license
 
+      # ✅ تمرير yes لأي طلب تفاعلي متبقٍ أثناء البناء
       - name: Build APK
-        run: buildozer -v android debug
+        run: yes | buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
