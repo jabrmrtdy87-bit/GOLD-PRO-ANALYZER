@@ -19,7 +19,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # ✅ إعداد Android SDK وتجاوز حزمة "tools" المحذوفة
+      # ✅ إعداد Android SDK
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
@@ -36,18 +36,16 @@ jobs:
           pip install buildozer
           pip install cython==0.29.33
 
-      # ✅ الحل الجذري: قبول التراخيص وتثبيت build-tools بشكل صريح
+      # ✅ قبول التراخيص وتثبيت build-tools
       - name: Accept Android SDK Licenses & Install Build Tools
         run: |
           yes | sdkmanager --licenses
           sdkmanager "build-tools;31.0.0"
           sdkmanager "platform-tools"
-          # التحقق من وجود aidl
-          which aidl || find ~/.buildozer -name "aidl" 2>/dev/null || echo "aidl not found yet"
 
-      # ✅ تمرير "y" تلقائياً لأي طلب تفاعلي أثناء البناء
+      # ✅ إزالة "yes |" من أمر البناء لتجنب خطأ Broken pipe
       - name: Build APK
-        run: yes | buildozer -v android debug
+        run: buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
