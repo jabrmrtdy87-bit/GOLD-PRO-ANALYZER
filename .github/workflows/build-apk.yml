@@ -13,6 +13,16 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # ✅ الخطوة الجديدة: إعداد Android SDK بشكل صحيح
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Install system dependencies
         run: |
           echo "deb http://archive.ubuntu.com/ubuntu jammy universe" | sudo tee /etc/apt/sources.list.d/jammy-temp.list
@@ -24,7 +34,7 @@ jobs:
           pip install buildozer
           pip install cython==0.29.33
 
-      # ✅ الخطوة الجديدة: قبول تراخيص Android SDK وتثبيت build-tools
+      # ✅ قبول التراخيص وتثبيت build-tools
       - name: Accept Android SDK Licenses & Install Build Tools
         run: |
           yes | sdkmanager --licenses || true
