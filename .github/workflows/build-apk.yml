@@ -36,16 +36,16 @@ jobs:
           pip install buildozer
           pip install cython==0.29.33
 
-      # ✅ قبول التراخيص وتثبيت build-tools
+      # ✅ قبول التراخيص وتثبيت build-tools مسبقًا
       - name: Accept Android SDK Licenses & Install Build Tools
         run: |
           yes | sdkmanager --licenses
           sdkmanager "build-tools;31.0.0"
           sdkmanager "platform-tools"
 
-      # ✅ إزالة "yes |" من أمر البناء لتجنب خطأ Broken pipe
+      # ✅ استخدام echo y لضمان قبول الترخيص أثناء البناء
       - name: Build APK
-        run: buildozer -v android debug
+        run: echo y | buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
