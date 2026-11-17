@@ -3,7 +3,8 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # ✅ التغيير الأهم: استخدام إصدار 22.04 بدلاً من latest لتجنب مشاكل الحزم
+    runs-on: ubuntu-22.04 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,29 +25,22 @@ jobs:
         with:
           packages: 'platform-tools'
 
-      # ✅ الحل: تثبيت libtinfo5 يدويًا قبل تثبيت باقي التبعيات
-      - name: Install libtinfo5 manually for Ubuntu 24.04
-        run: |
-          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.2_amd64.deb
-          sudo apt install -y ./libtinfo5_6.3-2ubuntu0.2_amd64.deb
-
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          # ملاحظة: تم إزالة libtinfo5 من هذه القائمة لأننا ثبتناها يدويًا في الخطوة السابقة
-          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
+          # الآن libtinfo5 ستُثبت بنجاح لأننا على ubuntu-22.04
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
       - name: Install Buildozer
         run: |
           pip install buildozer
           pip install cython==0.29.33
 
-      # ✅ قبول تراخيص Android SDK عبر مدير SDK الخاص بـ Buildozer
+      # ✅ قبول تراخيص Android SDK لضمان تثبيت build-tools و aidl
       - name: Accept Android SDK Licenses
         run: |
-          BUILD_OZER_SDK=~/.buildozer/android/platform/android-sdk
-          mkdir -p $BUILD_OZER_SDK/licenses
           yes | sdkmanager --licenses || true
+          sdkmanager "build-tools;31.0.0" || true
 
       - name: Build APK
         run: buildozer -v android debug
