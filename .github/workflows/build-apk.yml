@@ -34,18 +34,24 @@ jobs:
           pip install buildozer
           pip install cython==0.29.33
 
-      # ✅ الحل الجذري: إنشاء ملفات الترخيص في مسار Buildozer الصحيح
-      - name: Pre-accept Android SDK Licenses for Buildozer
+      # ✅ الحل الجذري: تثبيت أدوات سطر الأوامر في المسار الذي يبحث عنه Buildozer
+      - name: Install Android Command-line Tools for Buildozer
         run: |
-          BUILD_OZER_SDK=~/.buildozer/android/platform/android-sdk
-          mkdir -p $BUILD_OZER_SDK/licenses
-          echo -e "\n8933bad161af4b6a5b573652ffc7aaf3aee85a47" > $BUILD_OZER_SDK/licenses/android-sdk-license
-          echo -e "\nd56f5187479451eabf01fb78af6dfcb131b33910" > $BUILD_OZER_SDK/licenses/android-sdk-preview-license
-          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > $BUILD_OZER_SDK/licenses/google-tv-preview-license
+          SDK_ROOT=~/.buildozer/android/platform/android-sdk
+          mkdir -p $SDK_ROOT
+          # تحميل أدوات سطر الأوامر الحديثة
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          mkdir -p $SDK_ROOT/cmdline-tools
+          unzip -q cmdline-tools.zip -d $SDK_ROOT/cmdline-tools
+          mv $SDK_ROOT/cmdline-tools/cmdline-tools $SDK_ROOT/cmdline-tools/latest
+          # إنشاء ملف الترخيص
+          mkdir -p $SDK_ROOT/licenses
+          echo -e "\n8933bad161af4b6a5b573652ffc7aaf3aee85a47" > $SDK_ROOT/licenses/android-sdk-license
+          echo -e "\nd56f5187479451eabf01fb78af6dfcb131b33910" > $SDK_ROOT/licenses/android-sdk-preview-license
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > $SDK_ROOT/licenses/google-tv-preview-license
 
-      # ✅ تمرير yes لأي طلب تفاعلي متبقٍ أثناء البناء
       - name: Build APK
-        run: yes | buildozer -v android debug
+        run: buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
