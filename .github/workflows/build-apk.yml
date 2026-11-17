@@ -24,6 +24,12 @@ jobs:
           pip install buildozer
           pip install cython==0.29.33
 
+      # ✅ الخطوة الجديدة: قبول تراخيص Android SDK وتثبيت build-tools
+      - name: Accept Android SDK Licenses & Install Build Tools
+        run: |
+          yes | sdkmanager --licenses || true
+          yes | sdkmanager "build-tools;31.0.0" || true
+
       - name: Build APK
         run: buildozer -v android debug
 
