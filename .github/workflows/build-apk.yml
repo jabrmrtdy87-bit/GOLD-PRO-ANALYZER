@@ -26,7 +26,6 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          echo "deb http://archive.ubuntu.com/ubuntu jammy universe" | sudo tee /etc/apt/sources.list.d/jammy-temp.list
           sudo apt-get update
           sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
@@ -35,21 +34,24 @@ jobs:
           pip install buildozer
           pip install cython==0.29.33
 
-      # ✅ قبول التراخيص مسبقًا لضمان وجود ملفات الترخيص
-      - name: Accept Android SDK Licenses & Install Build Tools
+      # ✅ الحل الجذري: استخدام sdkmanager الخاص بـ Buildozer مع تمرير yes
+      - name: Accept Licenses via Buildozer's SDK Manager
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "build-tools;31.0.0" "platform-tools" || true
-
-      # ✅ التحقق من وجود aidl وملفات الترخيص قبل البناء
-      - name: Verify aidl and Licenses
-        run: |
-          echo "--- Checking for aidl ---"
-          which aidl || echo "aidl not in PATH yet"
-          echo "--- Checking license files ---"
-          ls -la $ANDROID_HOME/licenses/ || echo "No licenses folder found"
-          echo "--- Checking build-tools folder ---"
-          ls -la $ANDROID_HOME/build-tools/ || echo "No build-tools folder found"
+          # تحديد مسار SDK الذي يستخدمه Buildozer
+          BUILD_OZER_SDK=~/.buildozer/android/platform/android-sdk
+          # إنشاء مجلد الترخيص إذا لم يكن موجودًا
+          mkdir -p $BUILD_OZER_SDK/licenses
+          # قبول جميع التراخيص باستخدام sdkmanager الخاص بـ Buildozer
+          if [ -f "$BUILD_OZER_SDK/tools/bin/sdkmanager" ]; then
+            yes | $BUILD_OZER_SDK/tools/bin/sdkmanager --licenses --sdk_root=$BUILD_OZER_SDK
+          elif [ -f "$BUILD_OZER_SDK/cmdline-tools/latest/bin/sdkmanager" ]; then
+            yes | $BUILD_OZER_SDK/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=$BUILD_OZER_SDK
+          else
+            echo "sdkmanager not found in Buildozer's SDK path. Trying system sdkmanager..."
+            yes | sdkmanager --licenses
+          fi
+          # تثبيت build-tools لضمان وجود aidl
+          yes | $BUILD_OZER_SDK/tools/bin/sdkmanager "build-tools;31.0.0" --sdk_root=$BUILD_OZER_SDK || true
 
       - name: Build APK
         run: buildozer -v android debug
