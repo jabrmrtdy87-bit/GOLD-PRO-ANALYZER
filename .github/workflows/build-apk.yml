@@ -24,34 +24,29 @@ jobs:
         with:
           packages: 'platform-tools'
 
+      # ✅ الحل: تثبيت libtinfo5 يدويًا قبل تثبيت باقي التبعيات
+      - name: Install libtinfo5 manually for Ubuntu 24.04
+        run: |
+          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.2_amd64.deb
+          sudo apt install -y ./libtinfo5_6.3-2ubuntu0.2_amd64.deb
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+          # ملاحظة: تم إزالة libtinfo5 من هذه القائمة لأننا ثبتناها يدويًا في الخطوة السابقة
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
 
       - name: Install Buildozer
         run: |
           pip install buildozer
           pip install cython==0.29.33
 
-      # ✅ الحل الجذري: استخدام sdkmanager الخاص بـ Buildozer مع تمرير yes
-      - name: Accept Licenses via Buildozer's SDK Manager
+      # ✅ قبول تراخيص Android SDK عبر مدير SDK الخاص بـ Buildozer
+      - name: Accept Android SDK Licenses
         run: |
-          # تحديد مسار SDK الذي يستخدمه Buildozer
           BUILD_OZER_SDK=~/.buildozer/android/platform/android-sdk
-          # إنشاء مجلد الترخيص إذا لم يكن موجودًا
           mkdir -p $BUILD_OZER_SDK/licenses
-          # قبول جميع التراخيص باستخدام sdkmanager الخاص بـ Buildozer
-          if [ -f "$BUILD_OZER_SDK/tools/bin/sdkmanager" ]; then
-            yes | $BUILD_OZER_SDK/tools/bin/sdkmanager --licenses --sdk_root=$BUILD_OZER_SDK
-          elif [ -f "$BUILD_OZER_SDK/cmdline-tools/latest/bin/sdkmanager" ]; then
-            yes | $BUILD_OZER_SDK/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=$BUILD_OZER_SDK
-          else
-            echo "sdkmanager not found in Buildozer's SDK path. Trying system sdkmanager..."
-            yes | sdkmanager --licenses
-          fi
-          # تثبيت build-tools لضمان وجود aidl
-          yes | $BUILD_OZER_SDK/tools/bin/sdkmanager "build-tools;31.0.0" --sdk_root=$BUILD_OZER_SDK || true
+          yes | sdkmanager --licenses || true
 
       - name: Build APK
         run: buildozer -v android debug
